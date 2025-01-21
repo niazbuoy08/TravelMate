@@ -19,8 +19,8 @@ export default function Navbar() {
           <Link to="/tours" className="text-white hover:text-blue-500 transition">
             Tours
           </Link>
-          <Link to="/about" className="text-white hover:text-blue-500 transition">
-            About
+          <Link to="/ai-mate" className="text-white hover:text-blue-500 transition">
+            AI-Mate
           </Link>
           <Link to="/contact" className="text-white hover:text-blue-500 transition">
             Contact
