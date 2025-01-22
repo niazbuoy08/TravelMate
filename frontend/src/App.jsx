@@ -8,6 +8,8 @@ import Contact from './pages/Contact';
 import NotFound from './pages/NotFound';
 import SignIn from './pages/Auth/SignIn'; // Adjusted path for SignIn
 import SignUp from './pages/Auth/SignUp'; // Adjusted path for SignUp
+import TourDetails from './pages/TourDetails';
+
 
 export default function App() {
   return (
@@ -19,6 +21,7 @@ export default function App() {
           <Route path="/ai-mate" element={<AIMate />} /> {/* Updated path for AI-Mate */}
           <Route path="/tours" element={<Tours />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/tour/:id" element={<TourDetails />} />
 
           {/* Authentication Pages */}
           <Route path="/signin" element={<SignIn />} />
