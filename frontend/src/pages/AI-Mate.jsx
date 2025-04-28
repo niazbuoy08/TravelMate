@@ -1,29 +1,65 @@
 import React, { useState } from 'react';
+import Groq from 'groq-sdk';
+import { motion } from 'framer-motion';
+
+const groq = new Groq({
+  apiKey: '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',
+  dangerouslyAllowBrowser: true
+});
 
 export default function AIMate() {
   const [messages, setMessages] = useState([
     { sender: 'bot', text: 'Hello! I am AI-Mate, your travel assistant. How can I help you today?' },
   ]);
   const [userMessage, setUserMessage] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSend = () => {
-    if (userMessage.trim() === '') return;
+  const handleSend = async () => {
+    if (!userMessage.trim() || loading) return;
 
+    // Add user message
     const userMessageObj = { sender: 'user', text: userMessage };
-    const botResponse = { sender: 'bot', text: generateResponse(userMessage) };
-
-    setMessages((prevMessages) => [...prevMessages, userMessageObj, botResponse]);
+    setMessages(prev => [...prev, userMessageObj]);
     setUserMessage('');
-  };
+    
+    try {
+      setLoading(true);
+      
+      // Add loading indicator
+      setMessages(prev => [...prev, { sender: 'bot', text: '...', loading: true }]);
 
-  const generateResponse = (message) => {
-    // Simple response logic (can be expanded or replaced with AI integration)
-    if (message.toLowerCase().includes('beach')) {
-      return 'You should visit the Maldives for its stunning beaches and crystal-clear waters.';
-    } else if (message.toLowerCase().includes('adventure')) {
-      return 'How about exploring the Grand Canyon or going on a safari in Africa?';
-    } else {
-      return "I'm here to help! Please tell me what kind of places you're interested in.";
+      // Get AI response
+      const response = await groq.chat.completions.create({
+        model: "llama3-70b-8192",
+        temperature: 0.7,
+        messages: [{
+          role: "system",
+          content: `You are a friendly travel expert. Provide detailed, personalized travel suggestions. 
+          Format responses in clear, conversational English. Include:
+          - Destination highlights
+          - Best time to visit
+          - Budget tips
+          - Local experiences
+          - Safety considerations`
+        }, {
+          role: "user",
+          content: userMessage
+        }]
+      });
+
+      // Remove loading indicator and add actual response
+      setMessages(prev => [
+        ...prev.slice(0, -1),
+        { sender: 'bot', text: response.choices[0].message.content }
+      ]);
+      
+    } catch (error) {
+      setMessages(prev => [
+        ...prev.slice(0, -1),
+        { sender: 'bot', text: "Sorry, I'm having trouble connecting. Please try again later." }
+      ]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -37,10 +73,12 @@ export default function AIMate() {
         </div>
 
         {/* Chat Window */}
-        <div className="flex-1 p-6 overflow-y-auto bg-gray-800 space-y-4">
+        <div className="flex-1 p-6 overflow-y-auto bg-gray-800 space-y-4 h-96">
           {messages.map((message, index) => (
-            <div
+            <motion.div
               key={index}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
               className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               <div
@@ -48,31 +86,35 @@ export default function AIMate() {
                   message.sender === 'user'
                     ? 'bg-blue-500 text-white'
                     : 'bg-gray-600 text-gray-200'
-                }`}
+                } ${message.loading ? 'animate-pulse' : ''}`}
               >
                 {message.text}
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
 
-         {/* Input Area */}
-         <div className="bg-gray-700 px-4 py-3 border-t border-gray-600">
+        {/* Input Area */}
+        <div className="bg-gray-700 px-4 py-3 border-t border-gray-600">
           <div className="flex items-center space-x-3">
             <input
               type="text"
-              className="flex-grow px-6 py-3 rounded-lg bg-gray-800 text-black focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-grow px-6 py-3 rounded-lg bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Type your message..."
               value={userMessage}
               onChange={(e) => setUserMessage(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+              disabled={loading}
             />
-            <button
+            <motion.button
               onClick={handleSend}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg disabled:opacity-50"
+              disabled={loading}
             >
-              Send
-            </button>
+              {loading ? 'Sending...' : 'Send'}
+            </motion.button>
           </div>
         </div>
       </div>
